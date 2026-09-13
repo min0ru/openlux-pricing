@@ -107,7 +107,8 @@ approximation. Do not claim exact boundary pricing silently.
 ## Resilience
 
 - Apply a request timeout.
-- Cache last valid pricing response in process memory.
+- Cache last valid pricing response on disk and in process memory.
+- Use fresh disk cache before making a network request.
 - Use cached pricing after refresh failure.
 - Leave existing costs unchanged when no valid pricing exists.
 - Never log response secrets or credentials.

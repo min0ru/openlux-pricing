@@ -1,0 +1,29 @@
+name: Bug report
+description: Report incorrect behavior or a startup problem
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Remove secrets and private account data before submitting.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: OpenCode, plugin, and Node.js versions.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Steps and minimal sanitized configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant sanitized logs and expected versus actual behavior.
+    validations:
+      required: true
