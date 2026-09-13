@@ -1,0 +1,28 @@
+{
+  "name": "opencode-openlux-pricing",
+  "version": "0.1.0",
+  "description": "OpenCode plugin for dynamic OpenLux model pricing",
+  "type": "module",
+  "main": "dist/plugin.js",
+  "types": "dist/plugin.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "1.18.30"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.18.30",
+    "@types/node": "^22.20.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
