@@ -1,6 +1,6 @@
 {
   "name": "opencode-openlux-pricing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenCode plugin for dynamic OpenLux model pricing",
   "type": "module",
   "main": "dist/plugin.js",

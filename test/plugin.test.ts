@@ -44,4 +44,20 @@ describe("plugin config hook", () => {
     await expect(applyPricing(config, { pricingUrl: "https://example.test/pricing" })).resolves.toBe(0)
     expect(model).toEqual({ limit: { context: 1000 } })
   })
+
+  it("logs only when pricing is fetched from network", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined)
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      group_ratio: { route: 0.25 },
+      data: [{ model_name: "gpt-test", model_ratio: 1, completion_ratio: 1, enable_groups: ["route"] }],
+    }), { status: 200 })))
+
+    const config = { provider: { openlux: { models: { "gpt-test": {} } } } }
+    await applyPricing(config, { pricingUrl: "https://example.test/pricing" })
+    await applyPricing(config, { pricingUrl: "https://example.test/pricing" })
+
+    expect(info).toHaveBeenCalledTimes(1)
+    expect(info).toHaveBeenCalledWith("OpenLux pricing fetched; updated 1 configured model(s)")
+  })
 })

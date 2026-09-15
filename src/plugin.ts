@@ -25,11 +25,12 @@ export async function applyPricing(config: Config, options: Options = {}): Promi
   const models = config.provider?.openlux?.models
   if (!models) return 0
 
-  const pricing = await fetchPricing(
+  const result = await fetchPricing(
     options.pricingUrl ?? DEFAULT_PRICING_URL,
     options.timeoutMs ?? 3_000,
   )
-  if (!pricing) return 0
+  if (!result) return 0
+  const { pricing } = result
 
   const pricingByModel = new Map(
     pricing.data
@@ -49,7 +50,9 @@ export async function applyPricing(config: Config, options: Options = {}): Promi
     updated++
   }
 
-  console.info(`OpenLux pricing updated ${updated} configured model(s)`)
+  if (result.source === "network") {
+    console.info(`OpenLux pricing fetched; updated ${updated} configured model(s)`)
+  }
   return updated
 }
 

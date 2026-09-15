@@ -20,7 +20,8 @@ describe("OpenLux pricing fetch", () => {
     const first = await fetchPricing("https://example.test/pricing", 100, fetcher)
     const second = await fetchPricing("https://example.test/pricing", 100, fetcher)
 
-    expect(second).toBe(first)
+    expect(second?.pricing).toBe(first?.pricing)
+    expect(second?.source).toBe("stale")
     expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
@@ -32,5 +33,25 @@ describe("OpenLux pricing fetch", () => {
     )
 
     expect(result).toBeUndefined()
+  })
+
+  it("deduplicates concurrent network refreshes", async () => {
+    const fetcher = vi.fn().mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      return new Response(JSON.stringify({
+        success: true,
+        group_ratio: { route: 0.25 },
+        data: [],
+      }), { status: 200 })
+    })
+
+    const results = await Promise.all([
+      fetchPricing("https://example.test/pricing", 100, fetcher),
+      fetchPricing("https://example.test/pricing", 100, fetcher),
+    ])
+
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(results[0]?.source).toBe("network")
+    expect(results[1]?.source).toBe("network")
   })
 })
