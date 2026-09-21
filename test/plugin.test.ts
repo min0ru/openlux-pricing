@@ -14,6 +14,12 @@ describe("plugin config hook", () => {
     expect(typeof v2.setup).toBe("function")
   })
 
+  it("exports a V2-compatible local directory entrypoint", async () => {
+    const { Host } = await import("@opencode/plugin/host")
+    const resolved = Host.resolve({ directory: new URL("..", import.meta.url).pathname })
+    expect(resolved.server).toMatch(/server\.js$/)
+  })
+
   it("updates existing V2 OpenLux model costs and preserves metadata", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
       success: true,

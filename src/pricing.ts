@@ -103,15 +103,16 @@ export function modelCostsV2(
   for (const step of model.step_ratios) {
     if (!step || typeof step !== "object") continue
     const record = step as Record<string, unknown>
-    const size = finiteNonNegative(record.context ?? record.max_tokens ?? record.max_context ?? record.threshold)
-    const inputRatio = finiteNonNegative(record.input_ratio ?? record.model_ratio)
-    const outputRatio = finiteNonNegative(record.output_ratio ?? record.completion_ratio)
+    const size = finiteNonNegative(record.step_size ?? record.context ?? record.max_tokens ?? record.max_context ?? record.threshold)
+    const inputRatio = finiteNonNegative(record.prompt_step_ratio ?? record.input_ratio ?? record.model_ratio)
+    const outputRatio = finiteNonNegative(record.completion_step_ratio ?? record.output_ratio ?? record.completion_ratio)
     if (size === undefined || inputRatio === undefined || outputRatio === undefined) continue
     const input = base.input * inputRatio
     const output = base.output * outputRatio
+    const cacheRatio = finiteNonNegative(record.cache_step_ratio) ?? inputRatio
     const tierCache = {
-      read: cache.read * inputRatio,
-      write: cache.write * inputRatio,
+      read: cache.read * cacheRatio,
+      write: cache.write * cacheRatio,
     }
     costs.push({ tier: { type: "context", size }, input, output, cache: tierCache })
   }

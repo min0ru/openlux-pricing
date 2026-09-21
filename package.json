@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "server.js"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

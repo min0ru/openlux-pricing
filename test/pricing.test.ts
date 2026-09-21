@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { cheapestGroupRatio, modelCost, parsePricingResponse } from "../src/pricing.js"
+import { cheapestGroupRatio, modelCost, modelCostsV2, parsePricingResponse } from "../src/pricing.js"
 
 describe("pricing conversion", () => {
   const groups = { slow: 3, fast: 0.5 }
@@ -39,5 +39,19 @@ describe("pricing conversion", () => {
 
   it("validates response shape", () => {
     expect(() => parsePricingResponse({ success: true, data: [] })).toThrow("missing group ratios")
+  })
+
+  it("maps OpenLux step ratios to context tiers", () => {
+    expect(modelCostsV2({
+      model_ratio: 1,
+      completion_ratio: 2,
+      cache_ratio: 0.5,
+      cache_creation_5m_ratio: 0.25,
+      enable_groups: ["fast"],
+      step_ratios: [{ step_size: 272000, prompt_step_ratio: 2, completion_step_ratio: 3, cache_step_ratio: 4 }],
+    }, groups)).toEqual([
+      { input: 1, output: 2, cache: { read: 0.5, write: 0.25 } },
+      { tier: { type: "context", size: 272000 }, input: 2, output: 6, cache: { read: 2, write: 1 } },
+    ])
   })
 })
