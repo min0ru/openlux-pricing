@@ -45,10 +45,12 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@opencode-ai/plugin": "1.18.30"
+    "@opencode-ai/plugin": "1.18.30",
+    "@opencode/plugin": "2.0.11"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "1.18.30",
+    "@opencode/plugin": "2.0.11",
     "@types/node": "^22.20.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"

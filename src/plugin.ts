@@ -1,5 +1,5 @@
 import type { Plugin } from "@opencode-ai/plugin"
-import { define, type Plugin as V2Plugin, type CatalogDraft } from "@opencode-ai/plugin/v2/promise"
+import { Plugin as V2Plugin } from "@opencode/plugin"
 import { DEFAULT_PRICING_URL, fetchPricing } from "./openlux-api.js"
 import { modelCost, modelCostsV2, type CacheWriteTier, type PricingModel } from "./pricing.js"
 
@@ -66,33 +66,36 @@ const v1 = (async (_input, rawOptions) => {
   }
 }) satisfies Plugin
 
-export async function applyPricingV2(catalog: CatalogDraft, options: Options = {}): Promise<number> {
-  const result = await fetchPricing(options.pricingUrl ?? DEFAULT_PRICING_URL, options.timeoutMs ?? 3_000)
-  if (!result) return 0
-  const openlux = catalog.provider.get("openlux")
-  if (!openlux) return 0
-  const pricingByModel = new Map(result.pricing.data
+type V2ModelEditor = {
+  list(providerID?: string): ReadonlyArray<{ id: { toString(): string } }>
+  update(providerID: string, modelID: string, update: (model: { cost: unknown }) => void): void
+}
+
+export function applyPricingV2(modelEditor: V2ModelEditor, pricing: PricingModel[], groupRatio: Record<string, unknown>, options: Options = {}): number {
+  const pricingByModel = new Map(pricing
     .filter((model) => model.available !== false && typeof model.model_name === "string")
     .map((model) => [model.model_name as string, model]))
   let updated = 0
-  for (const model of openlux.models.values()) {
-    const source = pricingByModel.get(model.id)
+  for (const model of modelEditor.list("openlux")) {
+    const source = pricingByModel.get(model.id.toString())
     if (!source) continue
-    const cost = modelCostsV2(source, result.pricing.group_ratio, options.cacheWriteTier)
+    const cost = modelCostsV2(source, groupRatio, options.cacheWriteTier)
     if (!cost) continue
-    catalog.model.update("openlux", model.id, (draft) => { draft.cost = cost })
+    modelEditor.update("openlux", model.id.toString(), (draft) => { draft.cost = cost })
     updated++
   }
-  if (result.source === "network") console.info(`OpenLux pricing fetched; updated ${updated} V2 model(s)`)
   return updated
 }
 
-export const v2: V2Plugin = define({
+export const v2: V2Plugin.Plugin = V2Plugin.define({
   id: "opencode-openlux-pricing",
   setup: async (context) => {
     const options = context.options as Options
-    await context.catalog.transform(async (catalog) => {
-      await applyPricingV2(catalog, options)
+    const result = await fetchPricing(options.pricingUrl ?? DEFAULT_PRICING_URL, options.timeoutMs ?? 3_000)
+    if (!result) return
+    await context.model.transform((editor) => {
+      const updated = applyPricingV2(editor, result.pricing.data, result.pricing.group_ratio, options)
+      if (result.source === "network") console.info(`OpenLux pricing fetched; updated ${updated} V2 model(s)`)
     })
   },
 })

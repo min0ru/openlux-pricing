@@ -25,11 +25,11 @@ describe("plugin config hook", () => {
       capabilities: { tools: true, input: ["text"], output: ["text"] },
     }
     let updatedCost: unknown
-    const catalog = {
-      provider: { get: () => ({ models: new Map([[model.id, model]]) }) },
-      model: { update: (_provider: string, _id: string, update: (value: typeof model) => void) => update({ ...model, get cost() { return updatedCost }, set cost(value) { updatedCost = value } } as typeof model) },
-    } as never
-    await expect(applyPricingV2(catalog)).resolves.toBe(1)
+    const editor = {
+      list: () => [model],
+      update: (_provider: string, _id: string, update: (value: typeof model) => void) => update({ ...model, get cost() { return updatedCost }, set cost(value) { updatedCost = value } } as typeof model),
+    }
+    expect(applyPricingV2(editor, [{ model_name: "gpt-6-astra", model_ratio: 2, completion_ratio: 3, enable_groups: ["route"] }], { route: 0.25 })).toBe(1)
     expect(updatedCost).toEqual([{ input: 1, output: 3, cache: { read: 0, write: 0 } }])
   })
 
