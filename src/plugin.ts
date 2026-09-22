@@ -100,7 +100,12 @@ export const v2: V2Plugin.Plugin = V2Plugin.define({
   },
 })
 
-export default v2
+export const plugin = {
+  ...v2,
+  server: v1,
+}
+
+export default plugin
 export { v1 }
 
 export type { PricingModel }

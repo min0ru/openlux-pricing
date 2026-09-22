@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { clearPricingCache } from "../src/openlux-api.js"
-import { applyPricing, applyPricingV2, v1, v2 } from "../src/plugin.js"
+import { applyPricing, applyPricingV2, plugin, v1, v2 } from "../src/plugin.js"
 
 describe("plugin config hook", () => {
   beforeEach(() => {
@@ -12,6 +12,25 @@ describe("plugin config hook", () => {
     expect(typeof v1).toBe("function")
     expect(v2.id).toBe("opencode-openlux-pricing")
     expect(typeof v2.setup).toBe("function")
+    expect(plugin.id).toBe(v2.id)
+    expect(plugin.setup).toBe(v2.setup)
+    expect(typeof plugin.server).toBe("function")
+  })
+
+  it("uses the V1 server entrypoint from the package default export", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      group_ratio: { route: 0.25 },
+      data: [{ model_name: "gpt-test", model_ratio: 1, completion_ratio: 2, enable_groups: ["route"] }],
+    }), { status: 200 })))
+
+    const model = {}
+    const config = { provider: { openlux: { models: { "gpt-test": model } } } }
+    const hooks = await plugin.server({}, { pricingUrl: "https://example.test/pricing" })
+
+    await hooks.config(config)
+
+    expect(model).toMatchObject({ cost: { input: 0.5, output: 1 } })
   })
 
   it("exports a V2-compatible local directory entrypoint", async () => {
