@@ -61,6 +61,8 @@ async function withDiskLock<T>(operation: () => Promise<T>): Promise<T> {
   const lockPath = `${diskCachePath()}.lock`
   const startedAt = Date.now()
 
+  await mkdir(join(lockPath, ".."), { recursive: true })
+
   while (true) {
     try {
       const handle = await open(lockPath, "wx")
@@ -102,19 +104,16 @@ export async function fetchPricing(
   timeoutMs = 3_000,
   fetcher: typeof fetch = fetch,
 ): Promise<PricingResult | undefined> {
-  if (cachedPricing && url === DEFAULT_PRICING_URL) {
-    const disk = await readFreshDiskCache()
-    if (disk) return disk
-    return { pricing: cachedPricing, source: "memory" }
-  }
-
-  const loaded = await loadDiskCache(url)
-  if (loaded) return loaded
   if (memoryFetch) return memoryFetch
+
+  if (url === DEFAULT_PRICING_URL) {
+    const loaded = await loadDiskCache(url)
+    if (loaded) return loaded
+  }
 
   memoryFetch = withDiskLock(async () => {
     const disk = url === DEFAULT_PRICING_URL ? await readFreshDiskCache() : undefined
-    if (disk) return disk
+    if (disk && !cachedPricing) return disk
 
     try {
       const response = await fetcher(url, {
