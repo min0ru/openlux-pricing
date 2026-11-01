@@ -47,11 +47,11 @@
   },
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.18.29 <1.19.0",
-    "@opencode/plugin": "2.0.11"
+    "@opencode/plugin": "2.2.2"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "1.18.29",
-    "@opencode/plugin": "2.0.11",
+    "@opencode/plugin": "2.2.2",
     "@types/node": "^22.20.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
