@@ -104,16 +104,19 @@ export async function fetchPricing(
   timeoutMs = 3_000,
   fetcher: typeof fetch = fetch,
 ): Promise<PricingResult | undefined> {
-  if (memoryFetch) return memoryFetch
-
-  if (url === DEFAULT_PRICING_URL) {
-    const loaded = await loadDiskCache(url)
-    if (loaded) return loaded
+  if (cachedPricing && url === DEFAULT_PRICING_URL) {
+    const disk = await readFreshDiskCache()
+    if (disk) return disk
+    return { pricing: cachedPricing, source: "memory" }
   }
+
+  const loaded = await loadDiskCache(url)
+  if (loaded) return loaded
+  if (memoryFetch) return memoryFetch
 
   memoryFetch = withDiskLock(async () => {
     const disk = url === DEFAULT_PRICING_URL ? await readFreshDiskCache() : undefined
-    if (disk && !cachedPricing) return disk
+    if (disk) return disk
 
     try {
       const response = await fetcher(url, {

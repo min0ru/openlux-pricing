@@ -7,7 +7,8 @@ and releases follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-- No changes yet.
+- Repair clean-install dependency locking and use Node.js 24 in CI.
+- Create missing pricing-cache directories without changing cache reuse or refresh deduplication.
 
 ## [0.1.0] - 2026-09-13
 
