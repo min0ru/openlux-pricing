@@ -33,10 +33,28 @@ describe("plugin config hook", () => {
     expect(model).toMatchObject({ cost: { input: 0.5, output: 1 } })
   })
 
-  it("exports a V2-compatible local directory entrypoint", async () => {
+  it("loads the V2 plugin from the local directory and applies pricing", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      group_ratio: { route: 0.25 },
+      data: [{ model_name: "gpt-6-astra", model_ratio: 2, completion_ratio: 3, enable_groups: ["route"] }],
+    }), { status: 200 })))
     const { Host } = await import("@opencode/plugin/host")
     const resolved = Host.resolve({ directory: new URL("..", import.meta.url).pathname })
-    expect(resolved.server).toMatch(/server\.js$/)
+    const loaded = await Host.load(resolved.server!) as { default: { id: string, setup: (context: unknown) => Promise<void> } }
+    let updatedCost: unknown
+    const model = { id: "gpt-6-astra" }
+    const editor = {
+      list: () => [model],
+      update: (_provider: string, _id: string, update: (draft: { cost?: unknown }) => void) => update({ set cost(value) { updatedCost = value } }),
+    }
+    const context = {
+      options: { pricingUrl: "https://example.test/pricing" },
+      model: { transform: async (fn: (editor: unknown) => void) => fn(editor) },
+    }
+    expect(loaded.default.id).toBe("opencode-openlux-pricing")
+    await loaded.default.setup(context)
+    expect(updatedCost).toEqual([{ input: 1, output: 3, cache: { read: 0, write: 0 } }])
   })
 
   it("updates existing V2 OpenLux model costs and preserves metadata", async () => {
